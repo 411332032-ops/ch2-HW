@@ -4,20 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>臺北市人口結構與15歲以上婚姻狀況統計儀表板</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Leaflet 地圖 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- PapaParse (用於直接解析本地 CSV 檔案) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="data.js"></script>
     <style> #map { height: 350px; width: 100%; border-radius: 0.75rem; } </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
 
-    <!-- 標題與說明區 -->
     <header class="max-w-7xl mx-auto mb-6 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -25,12 +20,11 @@
                     臺北市 12 行政區人口結構與婚姻狀況分析儀表板
                 </h1>
                 <p class="text-slate-300 text-sm mt-2">
-                    <span class="text-amber-400 font-semibold">資料來源：</span>內政部戶政司「全國人口資料庫統計地圖」與「15歲以上人口婚姻狀況統計」<br>
+                    <span class="text-amber-400 font-semibold">資料來源：</span>內政部戶政司《全國人口資料庫統計地圖》與《十五歲以上人口婚姻狀況》<br>
                     <span class="text-amber-400 font-semibold">資料期間：</span>民國 63 年至 114 年 (1974~2025年) | 
-                    <span class="text-amber-400 font-semibold">限制說明：</span>行政區圖表呈現年齡層人口結構；婚姻演變採全國數據呈現變化趨勢。
+                    <span class="text-amber-400 font-semibold">限制說明：</span>行政區圖表呈現年齡層人口結構；婚姻演變採全國數據代理分析。
                 </p>
             </div>
-            <!-- 多圖連動切換選單 -->
             <div class="w-full md:w-64 bg-slate-700/60 p-3 rounded-xl border border-slate-600">
                 <label for="districtSelect" class="block text-xs font-bold text-slate-200 mb-1">🔍 選擇行政區（多圖連動）：</label>
                 <select id="districtSelect" class="w-full bg-slate-800 text-white border border-blue-500 rounded-lg p-2 text-sm focus:outline-none">
@@ -41,8 +35,6 @@
     </header>
 
     <main class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- KPI 數據卡片 (含正確單位) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
                 <p class="text-slate-400 text-xs font-medium">當前選取區域</p>
@@ -60,55 +52,33 @@
                 <p id="cardElderRatio" class="text-xs text-amber-300 mt-1">占比：26.37%</p>
             </div>
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-                <p class="text-slate-400 text-xs font-medium">全國 15 歲以上有偶率 (113年)</p>
-                <p class="text-2xl font-bold text-emerald-400 mt-1">49.03 %</p>
-                <p class="text-xs text-slate-400 mt-1">未婚率: 34.00% | 離婚率: 9.87%</p>
+                <p id="kpiMarriageTitle" class="text-slate-400 text-xs font-medium">全國 15 歲以上有偶率</p>
+                <p id="cardMarriageRate" class="text-2xl font-bold text-emerald-400 mt-1">49.03 %</p>
+                <p id="cardMarriageSub" class="text-xs text-slate-400 mt-1">未婚率: 34.00% | 離婚率: 9.87%</p>
             </div>
         </div>
 
-        <!-- 中間圖表區 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
                 <h2 class="text-lg font-bold text-blue-300 mb-2">行政區地理位置 (點擊氣泡可連動切換)</h2>
                 <div id="map"></div>
                 <p class="text-xs text-slate-400 mt-2">註腳：圓圈大小代表該區 15 歲以上總人口數量。</p>
             </div>
-
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
-                <h2 class="text-lg font-bold text-blue-300 mb-2">12 行政區人口結構堆疊圖</h2>
-                <div class="h-[280px] w-full">
-                    <canvas id="districtChart"></canvas>
-                </div>
-                <p class="text-xs text-slate-400 mt-2">註腳：X軸為行政區名稱，Y軸為人口數（單位：人）。採用堆疊直條圖。</p>
+                <h2 class="text-lg font-bold text-blue-300 mb-2">12 行政區人口結構堆疊圖 (連動高亮)</h2>
+                <div class="h-[280px] w-full"><canvas id="districtChart"></canvas></div>
+                <p class="text-xs text-slate-400 mt-2">註腳：X軸為行政區名稱，Y軸為人口數（單位：人）。選取區域將高亮顯示。</p>
             </div>
         </div>
 
-        <!-- 歷年趨勢圖 -->
         <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-blue-300 mb-2">全國 15 歲以上人口婚姻狀況歷年演變趨勢 (民國 104~113 年)</h2>
-            <div class="h-[300px] w-full">
-                <canvas id="trendChart"></canvas>
-            </div>
+            <h2 id="trendTitle" class="text-lg font-bold text-blue-300 mb-2">全國 15 歲以上人口婚姻狀況歷年演變趨勢</h2>
+            <div class="h-[300px] w-full"><canvas id="trendChart"></canvas></div>
             <p class="text-xs text-slate-400 mt-2">註腳：X軸為民國年份，Y軸為人口數（單位：人）。顯示有偶、未婚、離婚與喪偶人數走勢。</p>
         </div>
-
-        <!-- 洞察說明區 -->
-        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-            <h3 class="text-md font-bold text-amber-400 mb-2">💡 數據分析與洞察：</h3>
-            <ul class="list-disc list-inside text-sm text-slate-300 space-y-1">
-                <li><span class="font-semibold text-white">高齡化現象顯著：</span>臺北市 15 歲以上人口中，65 歲以上人口平均占比達 26.37%，其中大安區與士林區的高齡人口數量最多。</li>
-                <li><span class="font-semibold text-white">婚姻結構變化：</span>近十年間，離婚人口數從 104 年的 167 萬人持續攀升至 113 年的 203 萬人，反映家庭結構與婚姻型態的轉變。</li>
-            </ul>
-        </div>
-
     </main>
 
-    <footer class="max-w-7xl mx-auto mt-8 pb-8 text-center text-slate-500 text-xs">
-        專案名稱：HW1006 臺北市人口與婚姻狀況統計儀表板 | 開發者：rowan0629
-    </footer>
-
     <script>
-        // 經緯度對照表 (輔助地圖呈現)
         const coords = {
             "松山區": [25.0599, 121.5578], "信義區": [25.0330, 121.5654], "大安區": [25.0260, 121.5435],
             "中山區": [25.0685, 121.5332], "中正區": [25.0323, 121.5183], "大同區": [25.0632, 121.5132],
@@ -116,104 +86,98 @@
             "內湖區": [25.0830, 121.5872], "士林區": [25.0928, 121.5248], "北投區": [25.1321, 121.5012]
         };
 
-        let districtsData = [];
         const selectEl = document.getElementById('districtSelect');
+        const districtsData = TAIPEI_DISTRICTS_DATA.map(d => ({
+            name: d['區域別'],
+            age15_64: parseInt(d['15-64歲總計']),
+            age65: parseInt(d['65歲以上總計']),
+            lat: coords[d['區域別']][0],
+            lng: coords[d['區域別']][1]
+        }));
+
+        districtsData.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.name; opt.textContent = d.name;
+            selectEl.appendChild(opt);
+        });
 
         // 地圖初始化
         const map = L.map('map').setView([25.0478, 121.5319], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+
         const markers = {};
+        districtsData.forEach(d => {
+            const total = d.age15_64 + d.age65;
+            const marker = L.circleMarker([d.lat, d.lng], {
+                radius: Math.sqrt(total) / 18, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 0.6
+            }).addTo(map);
 
-        // 1. 動態讀取 cleaned_taipei_districts.csv
-        Papa.parse('cleaned_taipei_districts.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                districtsData = results.data.filter(row => row['區域別'] && row['區域別'] !== '總計').map(row => ({
-                    name: row['區域別'],
-                    age15_64: parseInt(row['15-64歲總計']),
-                    age65: parseInt(row['65歲以上總計']),
-                    lat: coords[row['區域別']][0],
-                    lng: coords[row['區域別']][1]
-                }));
+            marker.bindPopup(`<b>${d.name}</b><br>15-64歲: ${d.age15_64.toLocaleString()}人<br>65歲以上: ${d.age65.toLocaleString()}人`);
+            marker.on('click', () => { selectEl.value = d.name; updateDashboard(d.name); });
+            markers[d.name] = marker;
+        });
 
-                // 選單與地圖標記初始化
-                districtsData.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.name;
-                    opt.textContent = d.name;
-                    selectEl.appendChild(opt);
-
-                    const total = d.age15_64 + d.age65;
-                    const marker = L.circleMarker([d.lat, d.lng], {
-                        radius: Math.sqrt(total) / 18,
-                        color: '#3b82f6',
-                        fillColor: '#60a5fa',
-                        fillOpacity: 0.6
-                    }).addTo(map);
-
-                    marker.bindPopup(`<b>${d.name}</b><br>15-64歲: ${d.age15_64.toLocaleString()}人<br>65歲以上: ${d.age65.toLocaleString()}人`);
-                    marker.on('click', () => {
-                        selectEl.value = d.name;
-                        updateDashboard(d.name);
-                    });
-                    markers[d.name] = marker;
-                });
-
-                // 渲染行政區長條圖
-                new Chart(document.getElementById('districtChart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: districtsData.map(d => d.name),
-                        datasets: [
-                            { label: '15-64歲 (人)', data: districtsData.map(d => d.age15_64), backgroundColor: '#dc2626' },
-                            { label: '65歲以上 (人)', data: districtsData.map(d => d.age65), backgroundColor: '#eab308' }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { stacked: true, title: { display: true, text: '行政區名稱', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
-                            y: { stacked: true, title: { display: true, text: '人口數 (人)', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } }
-                        },
-                        plugins: { legend: { labels: { color: '#f1f5f9' } } }
-                    }
-                });
+        // 堆疊長條圖初始化
+        const districtChart = new Chart(document.getElementById('districtChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: districtsData.map(d => d.name),
+                datasets: [
+                    { label: '15-64歲 (人)', data: districtsData.map(d => d.age15_64), backgroundColor: districtsData.map(() => '#dc2626') },
+                    { label: '65歲以上 (人)', data: districtsData.map(d => d.age65), backgroundColor: districtsData.map(() => '#eab308') }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, title: { display: true, text: '行政區名稱', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
+                    y: { stacked: true, title: { display: true, text: '人口數 (人)', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } }
+                },
+                plugins: { legend: { labels: { color: '#f1f5f9' } } }
             }
         });
 
-        // 2. 動態讀取 cleaned_marital_trends.csv
-        Papa.parse('cleaned_marital_trends.csv', {
-            download: true,
-            header: true,
-            complete: function(results) {
-                const recent10 = results.data.slice(-10); // 取近 10 年
-                new Chart(document.getElementById('trendChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: recent10.map(r => r['ROC_Year']),
-                        datasets: [
-                            { label: '有偶 (人)', data: recent10.map(r => parseInt(r['Married'])), borderColor: '#10b981', tension: 0.2 },
-                            { label: '未婚 (人)', data: recent10.map(r => parseInt(r['Unmarried'])), borderColor: '#a855f7', tension: 0.2 },
-                            { label: '離婚 (人)', data: recent10.map(r => parseInt(r['Divorced'])), borderColor: '#f59e0b', tension: 0.2 },
-                            { label: '喪偶 (人)', data: recent10.map(r => parseInt(r['Widowed'])), borderColor: '#64748b', tension: 0.2 }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { title: { display: true, text: '民國年份', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
-                            y: { title: { display: true, text: '人口數 (人)', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } }
-                        },
-                        plugins: { legend: { labels: { color: '#f1f5f9' } } }
-                    }
-                });
+        // 關鍵修正：過濾空列再取近 10 年，解決缺 104 年問題
+        const validTrends = MARITAL_TRENDS_DATA.filter(r => r.ROC_Year && r.ROC_Year.toString().trim() !== '' && !isNaN(parseInt(r.Total_Population)));
+        const recent10 = validTrends.slice(-10);
+
+        // 動態設定年份標題與 KPI
+        const latestYrData = recent10[recent10.length - 1];
+        const startYr = recent10[0].ROC_Year;
+        const endYr = latestYrData.ROC_Year;
+        document.getElementById('trendTitle').textContent = `全國 15 歲以上人口婚姻狀況歷年演變趨勢 (${startYr} ~ ${endYr})`;
+        document.getElementById('kpiMarriageTitle').textContent = `全國 15 歲以上有偶率 (${endYr})`;
+        
+        const mRate = ((parseInt(latestYrData.Married) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
+        const uRate = ((parseInt(latestYrData.Unmarried) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
+        const dRate = ((parseInt(latestYrData.Divorced) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
+        
+        document.getElementById('cardMarriageRate').textContent = `${mRate} %`;
+        document.getElementById('cardMarriageSub').textContent = `未婚率: ${uRate}% | 離婚率: ${dRate}%`;
+
+        // 折線圖初始化
+        new Chart(document.getElementById('trendChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: recent10.map(r => r['ROC_Year']),
+                datasets: [
+                    { label: '有偶 (人)', data: recent10.map(r => parseInt(r['Married'])), borderColor: '#10b981', tension: 0.2 },
+                    { label: '未婚 (人)', data: recent10.map(r => parseInt(r['Unmarried'])), borderColor: '#a855f7', tension: 0.2 },
+                    { label: '離婚 (人)', data: recent10.map(r => parseInt(r['Divorced'])), borderColor: '#f59e0b', tension: 0.2 },
+                    { label: '喪偶 (人)', data: recent10.map(r => parseInt(r['Widowed'])), borderColor: '#64748b', tension: 0.2 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: '民國年份', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
+                    y: { title: { display: true, text: '人口數 (人)', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } }
+                },
+                plugins: { legend: { labels: { color: '#f1f5f9' } } }
             }
         });
 
-        // 互動連動邏輯
+        // 關鍵修正：連動長條圖高亮選取區域
         function updateDashboard(selected) {
             if (selected === 'ALL') {
                 document.getElementById('cardDistrictName').textContent = '全臺北市';
@@ -221,6 +185,10 @@
                 document.getElementById('cardElderPop').textContent = '576,507 人';
                 document.getElementById('cardElderRatio').textContent = '占比：26.37%';
                 map.setView([25.0478, 121.5319], 11);
+
+                // 重置所有長條圖顏色
+                districtChart.data.datasets[0].backgroundColor = districtsData.map(() => '#dc2626');
+                districtChart.data.datasets[1].backgroundColor = districtsData.map(() => '#eab308');
             } else {
                 const target = districtsData.find(d => d.name === selected);
                 if (target) {
@@ -232,8 +200,13 @@
                     document.getElementById('cardElderRatio').textContent = `占比：${ratio}%`;
                     map.setView([target.lat, target.lng], 13);
                     markers[target.name].openPopup();
+
+                    // 設定選中區域為高亮，非選中區域為半透明淡化
+                    districtChart.data.datasets[0].backgroundColor = districtsData.map(d => d.name === selected ? '#dc2626' : 'rgba(220, 38, 38, 0.25)');
+                    districtChart.data.datasets[1].backgroundColor = districtsData.map(d => d.name === selected ? '#eab308' : 'rgba(234, 179, 8, 0.25)');
                 }
             }
+            districtChart.update();
         }
 
         selectEl.addEventListener('change', (e) => updateDashboard(e.target.value));
