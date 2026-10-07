@@ -47,7 +47,7 @@ def run():
             })
             
     pd.DataFrame(records).to_csv('output/cleaned_marital_trends.csv', index=False, encoding='utf-8-sig')
-    print("✅ [第 1 步完成] etl.py 執行完畢，年份錯位已成功修復！")
+    print("[第 1 步完成] etl.py 執行完畢，年份錯位已成功修復！")
 
 if __name__ == '__main__': 
     run()
