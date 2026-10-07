@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
-import pandas as pd
+import os, pandas as pd
 
 def run():
     os.makedirs('output', exist_ok=True)
     
-    # 1. 處理臺北市行政區人口數據
+    # 1. 處理臺北市行政區人口
     csv_p = 'Data/補充資料/全國人口資料庫統計地圖.csv'
     if not os.path.exists(csv_p): 
         csv_p = 'Data/補充資料/全國人口資料庫統計地圖_2.csv'
@@ -19,14 +18,14 @@ def run():
     districts['高齡人口比例(%)'] = (districts['65歲以上總計'] / districts['15歲以上總人口'] * 100).round(2)
     districts.to_csv('output/cleaned_taipei_districts.csv', index=False, encoding='utf-8-sig')
 
-    # 2. 處理歷年婚姻狀況數據 (使用 bfill 修正年份對齊)
+    # 2. 處理歷年婚姻狀況 (使用 bfill 修復年份錯位)
     xls_p = 'Data/十五歲以上人口婚姻狀況(63).xls'
     if not os.path.exists(xls_p): 
         xls_p = 'Data/十五歲以上人口婚姻狀況(63)_2.xls'
         
     df_xls = pd.read_excel(xls_p)
     
-    # 關鍵修正：使用 bfill 向向上填補年份，讓「計」列正確對齊下一列的年份文字
+    # 關鍵修正：使用 bfill 向上填補，讓「計」列正確抓取下一列的真實年份
     df_xls['ROC_Year'] = df_xls.iloc[:, 0].bfill()
     df_xls['AD_Year'] = df_xls.iloc[:, 1].bfill()
     
@@ -36,7 +35,7 @@ def run():
         year_str = str(row['ROC_Year']).strip() if pd.notna(row['ROC_Year']) else ''
         
         if gender == '計' and '民國' in year_str:
-            roc_num = int(year_str.replace('民國', '').replace('年', ''))
+            r_num = int(year_str.replace('民國', '').replace('年', ''))
             records.append({
                 'ROC_Year': year_str,
                 'AD_Year': int(row['AD_Year']),
@@ -47,9 +46,8 @@ def run():
                 'Widowed': int(row.iloc[11])
             })
             
-    df_marital = pd.DataFrame(records)
-    df_marital.to_csv('output/cleaned_marital_trends.csv', index=False, encoding='utf-8-sig')
-    print("✅ etl.py 執行成功！")
+    pd.DataFrame(records).to_csv('output/cleaned_marital_trends.csv', index=False, encoding='utf-8-sig')
+    print("✅ [第 1 步完成] etl.py 執行完畢，年份錯位已成功修復！")
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     run()
