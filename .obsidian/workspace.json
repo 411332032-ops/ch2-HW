@@ -186,10 +186,21 @@
   },
   "active": "8ac4dc18e1826659",
   "lastOpenFiles": [
+    "docs/cleaned_taipei_districts.csv",
+    "docs/cleaned_marital_trends.csv",
+    "docs/data.js",
+    "etl/validation_log.txt",
+    "output/cleaned_marital_trends.csv",
+    "output/cleaned_taipei_districts.csv",
+    "etl/__pycache__/validate.cpython-312.pyc",
+    "etl/__pycache__/etl.cpython-312.pyc",
+    "etl/__pycache__/build_data.cpython-312.pyc",
+    "etl/__pycache__",
+    "etl/etl_legacy.py",
+    "Data/參考文件/統計圖.png",
+    "Data/參考文件/主題圖.png",
     "README.md",
-    "新增 文字文件.txt",
     "統計圖.png",
-    "未命名",
     "主題圖.png"
   ]
 }

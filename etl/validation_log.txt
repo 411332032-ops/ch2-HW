@@ -1,0 +1,4 @@
+=== Checksum Validation Log ===
+15-64加總核對: 1609966 -> PASS
+65以上加總核對: 576507 -> PASS
+婚姻狀況明細核對: -> PASS
