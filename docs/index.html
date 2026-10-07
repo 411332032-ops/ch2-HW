@@ -74,12 +74,7 @@
         <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
             <h2 id="trendTitle" class="text-lg font-bold text-blue-300 mb-2">全國 15 歲以上人口婚姻狀況歷年演變趨勢</h2>
             <div class="h-[300px] w-full"><canvas id="trendChart"></canvas></div>
-            <p class="text-xs text-slate-400 mt-2">註腳：X軸為西元年份（年），Y軸為人口數（單位：人）。全國數據，不隨行政區選單變動。</p>
-        </div>
-
-        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
-            <h2 class="text-lg font-bold text-amber-400 mb-2">💡 數據分析洞察</h2>
-            <ol id="insights" class="list-decimal list-inside text-sm text-slate-300 space-y-2"></ol>
+            <p class="text-xs text-slate-400 mt-2">註腳：X軸為民國年份，Y軸為人口數（單位：人）。顯示有偶、未婚、離婚與喪偶人數走勢。</p>
         </div>
     </main>
 
@@ -106,7 +101,6 @@
             selectEl.appendChild(opt);
         });
 
-        // 地圖初始化
         const map = L.map('map').setView([25.0478, 121.5319], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
 
@@ -122,7 +116,6 @@
             markers[d.name] = marker;
         });
 
-        // 堆疊長條圖初始化
         const districtChart = new Chart(document.getElementById('districtChart').getContext('2d'), {
             type: 'bar',
             data: {
@@ -142,29 +135,27 @@
             }
         });
 
-        // 過濾空列後使用全部年份（民國 63~114 年）
+        // 關鍵修正：先過濾空白列再取後 10 筆，確保 104 年不漏掉
         const validTrends = MARITAL_TRENDS_DATA.filter(r => r.ROC_Year && r.ROC_Year.toString().trim() !== '' && !isNaN(parseInt(r.Total_Population)));
-        const recent10 = validTrends;
+        const recent10 = validTrends.slice(-10);
 
-        // 動態設定年份標題與 KPI
         const latestYrData = recent10[recent10.length - 1];
         const startYr = recent10[0].ROC_Year;
         const endYr = latestYrData.ROC_Year;
-        document.getElementById('trendTitle').textContent = `全國 15 歲以上人口婚姻狀況歷年演變趨勢 (${startYr} ~ ${endYr}，${recent10[0].AD_Year}~${latestYrData.AD_Year} 年)`;
+        document.getElementById('trendTitle').textContent = `全國 15 歲以上人口婚姻狀況歷年演變趨勢 (${startYr} ~ ${endYr})`;
         document.getElementById('kpiMarriageTitle').textContent = `全國 15 歲以上有偶率 (${endYr})`;
-        
+
         const mRate = ((parseInt(latestYrData.Married) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
         const uRate = ((parseInt(latestYrData.Unmarried) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
         const dRate = ((parseInt(latestYrData.Divorced) / parseInt(latestYrData.Total_Population)) * 100).toFixed(2);
-        
+
         document.getElementById('cardMarriageRate').textContent = `${mRate} %`;
         document.getElementById('cardMarriageSub').textContent = `未婚率: ${uRate}% | 離婚率: ${dRate}%`;
 
-        // 折線圖初始化
         new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: recent10.map(r => r['AD_Year']),
+                labels: recent10.map(r => r['ROC_Year']),
                 datasets: [
                     { label: '有偶 (人)', data: recent10.map(r => parseInt(r['Married'])), borderColor: '#10b981', tension: 0.2 },
                     { label: '未婚 (人)', data: recent10.map(r => parseInt(r['Unmarried'])), borderColor: '#a855f7', tension: 0.2 },
@@ -175,31 +166,14 @@
             options: {
                 responsive: true, maintainAspectRatio: false,
                 scales: {
-                    x: { title: { display: true, text: '西元年份（年）', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
+                    x: { title: { display: true, text: '民國年份', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } },
                     y: { title: { display: true, text: '人口數 (人)', color: '#94a3b8' }, ticks: { color: '#cbd5e1' } }
                 },
                 plugins: { legend: { labels: { color: '#f1f5f9' } } }
             }
         });
 
-        // 數據分析洞察（由資料計算）
-        (() => {
-            const n = x => parseInt(x), f = x => x.toLocaleString();
-            const first = validTrends[0], last = latestYrData;
-            const pct = (r, k) => n(r[k]) / n(r.Total_Population) * 100;
-            const byRatio = [...districtsData].sort((a, b) => b.age65 / (b.age15_64 + b.age65) - a.age65 / (a.age15_64 + a.age65));
-            const rt = d => d.age65 / (d.age15_64 + d.age65) * 100;
-            const hi = byRatio[0], lo = byRatio[byRatio.length - 1];
-            const peak = validTrends.reduce((m, r) => n(r.Married) > n(m.Married) ? r : m);
-            const items = [
-                `<b class="text-white">高齡化區域落差明顯：</b>臺北市 15 歲以上人口中 65 歲以上占 26.37%；${hi.name}最高（${rt(hi).toFixed(2)}%），${lo.name}最低（${rt(lo).toFixed(2)}%），相差 ${(rt(hi) - rt(lo)).toFixed(2)} 個百分點。`,
-                `<b class="text-white">離婚人口大幅成長：</b>全國離婚人口由 ${first.AD_Year} 年的 ${f(n(first.Divorced))} 人增至 ${last.AD_Year} 年的 ${f(n(last.Divorced))} 人（約 ${(n(last.Divorced) / n(first.Divorced)).toFixed(1)} 倍），占 15 歲以上人口比例由 ${pct(first, 'Divorced').toFixed(2)}% 升至 ${pct(last, 'Divorced').toFixed(2)}%。`,
-                `<b class="text-white">有偶比例下降：</b>有偶人數在 ${peak.AD_Year} 年達高點 ${f(n(peak.Married))} 人；有偶率由 ${pct(first, 'Married').toFixed(2)}% 降至 ${pct(last, 'Married').toFixed(2)}%。<span class="text-slate-400">（婚姻趨勢為全國資料，與臺北市高齡化並列觀察，不代表因果關係。）</span>`
-            ];
-            document.getElementById('insights').innerHTML = items.map(t => `<li>${t}</li>`).join('');
-        })();
-
-        // 關鍵修正：連動長條圖高亮選取區域
+        // 關鍵修正：長條圖連動高亮功能
         function updateDashboard(selected) {
             if (selected === 'ALL') {
                 document.getElementById('cardDistrictName').textContent = '全臺北市';
@@ -208,7 +182,6 @@
                 document.getElementById('cardElderRatio').textContent = '占比：26.37%';
                 map.setView([25.0478, 121.5319], 11);
 
-                // 重置所有長條圖顏色
                 districtChart.data.datasets[0].backgroundColor = districtsData.map(() => '#dc2626');
                 districtChart.data.datasets[1].backgroundColor = districtsData.map(() => '#eab308');
             } else {
@@ -223,7 +196,6 @@
                     map.setView([target.lat, target.lng], 13);
                     markers[target.name].openPopup();
 
-                    // 設定選中區域為高亮，非選中區域為半透明淡化
                     districtChart.data.datasets[0].backgroundColor = districtsData.map(d => d.name === selected ? '#dc2626' : 'rgba(220, 38, 38, 0.25)');
                     districtChart.data.datasets[1].backgroundColor = districtsData.map(d => d.name === selected ? '#eab308' : 'rgba(234, 179, 8, 0.25)');
                 }
